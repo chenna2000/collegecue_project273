@@ -1139,31 +1139,60 @@ class ChangePasswordConsultantView(View):
         except Exception as e:
             return JsonResponse({'error': str(e)}, status=500)
 
+# @method_decorator(csrf_exempt, name='dispatch')
+# class DeleteCompanyInChargeAccountView(View):
+#     def post(self, request):
+#         try:
+#             auth_header = request.headers.get('Authorization')
+#             if not auth_header or not auth_header.startswith('Bearer '):
+#                 return JsonResponse({'error': 'Token is missing or invalid format'}, status=400)
+
+#             token = auth_header.split(' ')[1]
+
+#             data = json.loads(request.body.decode('utf-8'))
+#             if not data.get('confirmation', False):
+#                 return JsonResponse({'error': 'Confirmation is required to delete account'}, status=400)
+
+#             company = CompanyInCharge.objects.filter(token=token).first()
+#             if not company:
+#                 return JsonResponse({'error': 'Invalid token'}, status=404)
+
+#             company.delete()
+#             return JsonResponse({'success': True, 'message': 'Account deleted successfully'}, status=200)
+
+#         except json.JSONDecodeError:
+#             return JsonResponse({'error': 'Invalid JSON'}, status=400)
+#         except Exception as e:
+#             return JsonResponse({'error': str(e)}, status=500)
+
+
 @method_decorator(csrf_exempt, name='dispatch')
 class DeleteCompanyInChargeAccountView(View):
     def post(self, request):
         try:
-            auth_header = request.headers.get('Authorization')
-            if not auth_header or not auth_header.startswith('Bearer '):
+            auth_header = request.headers.get('Authorization', '')
+            if not auth_header.startswith('Bearer '):
                 return JsonResponse({'error': 'Token is missing or invalid format'}, status=400)
 
-            token = auth_header.split(' ')[1]
-
-            data = json.loads(request.body.decode('utf-8'))
-            if not data.get('confirmation', False):
+            token = auth_header[7:]
+            try:
+                data = json.loads(request.body.decode('utf-8'))
+            except json.JSONDecodeError:
+                return JsonResponse({'error': 'Invalid JSON'}, status=400)
+            
+            if not data.get('confirmation'):
                 return JsonResponse({'error': 'Confirmation is required to delete account'}, status=400)
-
+            
             company = CompanyInCharge.objects.filter(token=token).first()
             if not company:
                 return JsonResponse({'error': 'Invalid token'}, status=404)
-
+            
             company.delete()
             return JsonResponse({'success': True, 'message': 'Account deleted successfully'}, status=200)
 
-        except json.JSONDecodeError:
-            return JsonResponse({'error': 'Invalid JSON'}, status=400)
         except Exception as e:
             return JsonResponse({'error': str(e)}, status=500)
+
 
 @method_decorator(csrf_exempt, name='dispatch')
 class DeleteJobSeekerAccountView(View):
