@@ -1434,8 +1434,7 @@ def company_status_counts(request, company_in_charge_id):
         # company = Company.objects.get(name=company_name, company_in_charge=company_in_charge)
 
         total_applications = Application.objects.filter(company_in_charge=company_in_charge).count()
-        # shortlisted_count = Application.objects.filter(company_in_charge=company_in_charge, status='selected').count()
-        shortlisted_count = Application.objects.filter(company_in_charge=company_in_charge,status__in=['selected', 'shortlisted']).count()
+        shortlisted_count = Application.objects.filter(company_in_charge=company_in_charge, status='shortlisted').count()
         rejected_count = Application.objects.filter(company_in_charge=company_in_charge, status='rejected').count()
         jobs_posted = Job.objects.filter(company_in_charge=company_in_charge).count()
 
@@ -1868,7 +1867,7 @@ def submit_college_enquiry(request, university_in_charge_id):
 
     try:
         data = json.loads(request.body)
-		
+
         if not data.get('email'):
             return JsonResponse({'error': 'Email is required'}, status=400)
 
@@ -1882,7 +1881,7 @@ def submit_college_enquiry(request, university_in_charge_id):
                 firstname=data.get('firstname', ''),
                 lastname=data.get('lastname', ''),
                 email=email,
-                password=data.get('password', ''),
+                password=make_password(data.get('password', '')),
                 course=data.get('course', 'B-Tech'),
                 educations=data.get('education', 'Not specified'),
                 percentage=data.get('percentage', '0'),
@@ -1906,7 +1905,6 @@ def submit_college_enquiry(request, university_in_charge_id):
         if CollegeEnquiry.objects.filter(university_in_charge=university_in_charge, new_user=user).exists():
             return JsonResponse({'error': 'An enquiry has already been submitted for this university by this user.'}, status=400)
 
-        # Create the enquiry
         enquiry = CollegeEnquiry.objects.create(
             first_name=data.get('firstname', user.firstname),
             last_name=data.get('lastname', user.lastname),
@@ -1981,10 +1979,8 @@ def college_status_counts(request, university_in_charge_id):
         enquiry_count = CollegeEnquiry.objects.filter(university_in_charge=university_in_charge).count()
         job_posted_count = Job1.objects.filter(university_in_charge=university_in_charge).count()
         total_visitor_count = Visitor.objects.filter(university_in_charge=university_in_charge).count()
-        # shortlisted_count = Application1.objects.filter(job__university_in_charge=university_in_charge, status='shortlisted').count()
-        shortlisted_count = Application1.objects.filter(job__university_in_charge=university_in_charge,  status__in=['selected', 'shortlisted']).count()
+        shortlisted_count = Application1.objects.filter(job__university_in_charge=university_in_charge, status='shortlisted').count()
 
-        
         jobs_by_month = (
             Job1.objects.filter(university_in_charge=university_in_charge)
             .annotate(month=TruncMonth('published_at'))
@@ -2243,7 +2239,7 @@ def college_jobs_api(request, college_id, university_in_charge_id):
         jobs = Job1.objects.filter(college_id=college_id, university_in_charge=university_in_charge).values('job_title', 'location', 'job_status','id','published_at')
 
         if not jobs:
-            return JsonResponse({"message": "No Jobs found"}, status=404)
+            return JsonResponse({"message": "No jobs found."}, status=404)
 
         return JsonResponse(list(jobs), safe=False, status=200)
 
@@ -2340,7 +2336,7 @@ def jobs_by_college(request, university_in_charge_id):
             jobs = jobs.filter(college=college)
             if not jobs.exists():
                 return JsonResponse({'error': 'No Jobs Found'}, status=400)
-
+            
         if job_status:
             job_status = job_status.lower()
             if job_status in ['active', 'closed']:
@@ -2353,7 +2349,10 @@ def jobs_by_college(request, university_in_charge_id):
             jobs = jobs.order_by(order)
         elif sort_order:
             return JsonResponse({'error': 'Invalid sort order'}, status=400)
-
+        
+        if not jobs.exists():
+                return JsonResponse({'error': 'No Jobs Found'}, status=400)
+        
         jobs_list = [{
             'id': job.id,
             'university_in_charge': str(university_in_charge),
@@ -4049,6 +4048,131 @@ def jobseeker_apply_for_job(request, job_id, jobseeker_id):
     except Exception as e:
         return JsonResponse({'error': str(e)}, status=500)
 
+# @csrf_exempt
+# def fetch_company_job_applications(request, company_in_charge_id, job_id):
+#     auth_header = request.headers.get('Authorization')
+#     if not auth_header or not auth_header.startswith('Bearer '):
+#         return JsonResponse({'error': 'Token is missing or not in the correct format'}, status=400)
+
+#     token = auth_header.split(' ')[1]
+
+#     try:
+#         company_in_charge = CompanyInCharge.objects.get(id=company_in_charge_id, token=token)
+#     except CompanyInCharge.DoesNotExist:
+#         return JsonResponse({'error': 'Invalid token or company in charge not found'}, status=401)
+
+#     try:
+#         job = get_object_or_404(Job, company_in_charge=company_in_charge, unique_job_id_as_int=job_id)
+
+#         applications = Application.objects.filter(job=job)
+
+#         applications_list = [{
+#             'id': app.id,
+#             'first_name': app.first_name,
+#             'last_name': app.last_name,
+#             'email': app.email,
+#             'phone_number': app.phone_number,
+#             'bio': app.bio,
+#             'education': app.education,
+#             'experience': app.experience,
+#             'status': app.status,
+#             'applied_at': app.applied_at,
+#             'model_name': app._meta.model.__name__ ,
+#         } for app in applications]
+
+#         job_details = {
+#             'job_title': job.job_title,
+#             'company': job.company.name,
+#             'description': job.description,
+#             'requirements': job.requirements,
+#             'published_at': job.published_at,
+#             'experience_yr': job.experience_yr,
+#             'job_type': job.job_type,
+#             'experience': job.experience,
+#             'category': job.category,
+#             'skills': job.skills,
+#             'workplaceTypes': job.workplaceTypes,
+#             'location': job.location,
+#             'questions': job.questions,
+#             'job_status': job.job_status,
+#             'must_have_qualification': job.must_have_qualification,
+#         }
+
+#         response_data = {
+#             'jobdetails': job_details,
+#             'applicants': applications_list
+#         }
+
+#         return JsonResponse(response_data, safe=False, status=200)
+
+#     except Exception as e:
+#         return JsonResponse({'error': f'An error occurred: {str(e)}'}, status=500)
+
+
+# @csrf_exempt
+# def fetch_company_job_applications(request, company_in_charge_id, job_id):
+#     auth_header = request.headers.get('Authorization')
+#     if not auth_header or not auth_header.startswith('Bearer '):
+#         return JsonResponse({'error': 'Token is missing or not in the correct format'}, status=400)
+
+#     token = auth_header.split(' ')[1]
+
+#     try:
+#         company_in_charge = CompanyInCharge.objects.get(id=company_in_charge_id, token=token)
+#     except CompanyInCharge.DoesNotExist:
+#         return JsonResponse({'error': 'Invalid token or company in charge not found'}, status=401)
+
+#     try:
+#         job = get_object_or_404(Job, company_in_charge=company_in_charge, unique_job_id_as_int=job_id)
+
+#         applications = Application.objects.filter(job=job)
+
+#         applications_list = []
+#         for app in applications:
+#             model_name = 'new_user' if app.user else 'JobSeeker'
+#             applications_list.append({
+#                 'id': app.id,
+#                 'first_name': app.first_name,
+#                 'last_name': app.last_name,
+#                 'email': app.email,
+#                 'phone_number': app.phone_number,
+#                 'bio': app.bio,
+#                 'education': app.education,
+#                 'experience': app.experience,
+#                 'status': app.status,
+#                 'applied_at': app.applied_at,
+#                 'model_name': model_name,
+#             })
+
+#         job_details = {
+#             'job_title': job.job_title,
+#             'company': job.company.name,
+#             'description': job.description,
+#             'requirements': job.requirements,
+#             'published_at': job.published_at,
+#             'experience_yr': job.experience_yr,
+#             'job_type': job.job_type,
+#             'experience': job.experience,
+#             'category': job.category,
+#             'skills': job.skills,
+#             'workplaceTypes': job.workplaceTypes,
+#             'location': job.location,
+#             'questions': job.questions,
+#             'job_status': job.job_status,
+#             'must_have_qualification': job.must_have_qualification,
+#         }
+
+#         response_data = {
+#             'jobdetails': job_details,
+#             'applicants': applications_list
+#         }
+
+#         return JsonResponse(response_data, safe=False, status=200)
+
+#     except Exception as e:
+#         return JsonResponse({'error': f'An error occurred: {str(e)}'}, status=500)
+
+
 # def filter_empty_entries(entries):
     
 #     def remove_empty_fields(data):
@@ -4243,7 +4367,7 @@ def jobseeker_apply_for_job(request, job_id, jobseeker_id):
 #                 ])
 #             }
 
-#             model_name = 'new_user' if app.user else 'jobseeker'
+#             model_name = 'new_user' if app.user else 'JobSeeker'
 #             applications_list.append({
 #                 'id': app.id,
 #                 'first_name': app.first_name,
@@ -4288,6 +4412,362 @@ def jobseeker_apply_for_job(request, job_id, jobseeker_id):
 #     except Exception as e:
 #         return JsonResponse({'error': f'An error occurred: {str(e)}'}, status=500)
 
+# @csrf_exempt
+# def fetch_college_job_applications(request, university_in_charge_id, job_id):
+#     auth_header = request.headers.get('Authorization')
+#     if not auth_header or not auth_header.startswith('Bearer '):
+#         return JsonResponse({'error': 'Token is missing or not in the correct format'}, status=400)
+
+#     token = auth_header.split(' ')[1]
+
+#     try:
+#         university_in_charge = UniversityInCharge.objects.get(id=university_in_charge_id, token=token)
+#     except UniversityInCharge.DoesNotExist:
+#         return JsonResponse({'error': 'Invalid token or university in charge not found'}, status=401)
+
+#     try:
+#         job = get_object_or_404(Job1, university_in_charge=university_in_charge, id=job_id)
+
+#         applications = Application1.objects.filter(job=job)
+
+#         applications_list = [{
+#             'id': app.id,
+#             'first_name': app.first_name,
+#             'last_name': app.last_name,
+#             'email': app.email,
+#             'phone_number': app.phone_number,
+#             'bio': app.bio,
+#             'education': app.education,
+#             'experience': app.experience,
+#             'status': app.status,
+#             'applied_at': app.applied_at,
+#         } for app in applications]
+
+#         job_details = {
+#             'job_title': job.job_title,
+#             'college': job.college.college_name,
+#             'description': job.description,
+#             'requirements': job.requirements,
+#             'published_at': job.published_at,
+#             'experience_yr': job.experience,
+#             'job_type': job.job_type,
+#             'category': job.category,
+#             'skills': job.skills,
+#             'workplace_types': job.workplaceTypes,
+#             'location': job.location,
+#             'questions': job.questions,
+#             'job_status': job.job_status,
+#             'must_have_qualification': job.must_have_qualification,
+#         }
+
+#         response_data = {
+#             'jobdetails': job_details,
+#             'applicants': applications_list
+#         }
+
+#         return JsonResponse(response_data, safe=False, status=200)
+
+#     except Job1.DoesNotExist:
+#         return JsonResponse({'error': 'No Jobs Found'}, status=404)
+
+#     except Exception as e:
+#         return JsonResponse({'error': f'An error occurred: {str(e)}'}, status=500)
+
+
+# @csrf_exempt
+# def fetch_college_job_applications(request, university_in_charge_id, job_id):
+#     auth_header = request.headers.get('Authorization')
+#     if not auth_header or not auth_header.startswith('Bearer '):
+#         return JsonResponse({'error': 'Token is missing or not in the correct format'}, status=400)
+
+#     token = auth_header.split(' ')[1]
+
+#     try:
+#         university_in_charge = UniversityInCharge.objects.get(id=university_in_charge_id, token=token)
+#     except UniversityInCharge.DoesNotExist:
+#         return JsonResponse({'error': 'Invalid token or university in charge not found'}, status=401)
+
+#     try:
+#         job = get_object_or_404(Job1, university_in_charge=university_in_charge, id=job_id)
+
+#         applications = Application1.objects.filter(job=job)
+
+#         applications_list = []
+#         for app in applications:
+#             model_name = 'new_user' if app.user else 'JobSeeker'
+#             applications_list.append({
+#                 'id': app.id,
+#                 'first_name': app.first_name,
+#                 'last_name': app.last_name,
+#                 'email': app.email,
+#                 'phone_number': app.phone_number,
+#                 'bio': app.bio,
+#                 'education': app.education,
+#                 'experience': app.experience,
+#                 'status': app.status,
+#                 'applied_at': app.applied_at,
+#                 'model_name': model_name,
+#             })
+
+#         job_details = {
+#             'job_title': job.job_title,
+#             'college': job.college.college_name,
+#             'description': job.description,
+#             'requirements': job.requirements,
+#             'published_at': job.published_at,
+#             'experience_yr': job.experience,
+#             'job_type': job.job_type,
+#             'category': job.category,
+#             'skills': job.skills,
+#             'workplace_types': job.workplaceTypes,
+#             'location': job.location,
+#             'questions': job.questions,
+#             'job_status': job.job_status,
+#             'must_have_qualification': job.must_have_qualification,
+#         }
+
+#         response_data = {
+#             'jobdetails': job_details,
+#             'applicants': applications_list
+#         }
+
+#         return JsonResponse(response_data, safe=False, status=200)
+
+#     except Job1.DoesNotExist:
+#         return JsonResponse({'error': 'No Jobs Found'}, status=404)
+
+#     except Exception as e:
+#         return JsonResponse({'error': f'An error occurred: {str(e)}'}, status=500)
+
+
+
+
+# @csrf_exempt
+# def fetch_college_job_applications(request, university_in_charge_id, job_id):
+#     auth_header = request.headers.get('Authorization')
+#     if not auth_header or not auth_header.startswith('Bearer '):
+#         return JsonResponse({'error': 'Token is missing or not in the correct format'}, status=400)
+
+#     token = auth_header.split(' ')[1]
+
+#     try:
+#         university_in_charge = UniversityInCharge.objects.get(id=university_in_charge_id, token=token)
+#     except UniversityInCharge.DoesNotExist:
+#         return JsonResponse({'error': 'Invalid token or university in charge not found'}, status=401)
+
+#     try:
+#         job = get_object_or_404(Job1, university_in_charge=university_in_charge, id=job_id)
+
+#         applications = Application1.objects.filter(job=job)
+
+#         applications_list = []
+#         for app in applications:
+#             resume_data = {}
+#             if app.user:
+#                 resume = Resume.objects.filter(user=app.user).first()
+#                 if resume:
+#                     resume_data = {
+#                 # "first_name": resume.first_name, 
+#                 # "last_name": resume.last_name,
+#                 # "email": resume.email,
+#                 # "phone": resume.phone,
+#                 "address": resume.address,
+#                 "date_of_birth": resume.date_of_birth,
+#                 "website_urls": resume.website_urls,
+#                 "skills": resume.skills,
+#                 "activities": resume.activities,
+#                 "interests": resume.interests,
+#                 "languages": resume.languages,
+#                 "bio": resume.bio,
+#                 "city": resume.city,
+#                 "state": resume.state,
+#                 "country": resume.country,
+#                 "zipcode": resume.zipcode,
+#                 # "attachments": resume.Attachment.url if resume.Attachment else None,
+#                 "objective": resume.objective.text if hasattr(resume, 'objective') else 'Not specified',
+#                 "education": [
+#                     {
+#                         "course_or_degree": education.course_or_degree,
+#                         "school_or_university": education.school_or_university,
+#                         "grade_or_cgpa": education.grade_or_cgpa,
+#                         "start_date": education.start_date,
+#                         "end_date": education.end_date,
+#                         "description": education.description
+#                     } for education in resume.education_entries.all()
+#                 ],
+#                 "experience": filter_empty_entries([
+#                     {
+#                         "job_title": experience.job_title,
+#                         "company_name": experience.company_name,
+#                         "start_date": experience.start_date,
+#                         "end_date": experience.end_date,
+#                         "description": experience.description,
+#                     } for experience in resume.experience_entries.all()
+#                 ]),
+#                 "projects": filter_empty_entries([
+#                     {
+#                         "title": project.title,
+#                         "description": project.description,
+#                         "project_link": project.project_link
+#                     } for project in resume.projects.all()
+#                 ]),
+#                 "references": filter_empty_entries([
+#                     {
+#                         "name": reference.name,
+#                         "contact_info": reference.contact_info,
+#                         "relationship": reference.relationship,
+#                     } for reference in resume.references.all()
+#                 ]),
+#                 "certifications": filter_empty_entries([
+#                     {
+#                         "name": certification.name,
+#                         "start_date": certification.start_date,
+#                         "end_date": certification.end_date,
+#                     } for certification in resume.certifications.all()
+#                 ]),
+#                 "achievements": filter_empty_entries([
+#                     {
+#                         "title": achievement.title,
+#                         "publisher": achievement.publisher,
+#                         "start_date": achievement.start_date,
+#                         "end_date": achievement.end_date,
+#                     } for achievement in resume.achievements.all()
+#                 ]),
+#                 "publications": filter_empty_entries([
+#                     {
+#                         "title": publication.title,
+#                         "start_date": publication.start_date,
+#                         "end_date": publication.end_date,
+#                     } for publication in resume.publications.all()
+#                 ])
+#             }
+#             else:
+#                 resume = JobSeeker_Resume.objects.filter(job_seeker=app.job_seeker).first()
+#                 if resume:
+#                     resume_data = {
+#                 # "first_name": resume.first_name, 
+#                 # "last_name": resume.last_name,
+#                 # "email": resume.email,
+#                 # "phone": resume.phone,
+#                 "address": resume.address,
+#                 "date_of_birth": resume.date_of_birth,
+#                 "website_urls": resume.website_urls,
+#                 "skills": resume.skills,
+#                 "activities": resume.activities,
+#                 "interests": resume.interests,
+#                 "languages": resume.languages,
+#                 "bio": resume.bio,
+#                 "city": resume.city,
+#                 "state": resume.state,
+#                 "country": resume.country,
+#                 "zipcode": resume.zipcode,
+#                 # "attachments": resume.Attachment.url if resume.Attachment else None,
+#                 "objective": resume.objective.text if hasattr(resume, 'objective') else 'Not specified',
+#                 "education": [
+#                     {
+#                         "course_or_degree": education.course_or_degree,
+#                         "school_or_university": education.school_or_university,
+#                         "grade_or_cgpa": education.grade_or_cgpa,
+#                         "start_date": education.start_date,
+#                         "end_date": education.end_date,
+#                         "description": education.description
+#                     } for education in resume.education_entries.all()
+#                 ],
+#                 "experience": filter_empty_entries([
+#                     {
+#                         "job_title": experience.job_title,
+#                         "company_name": experience.company_name,
+#                         "start_date": experience.start_date,
+#                         "end_date": experience.end_date,
+#                         "description": experience.description,
+#                     } for experience in resume.experience_entries.all()
+#                 ]),
+#                 "projects": filter_empty_entries([
+#                     {
+#                         "title": project.title,
+#                         "description": project.description,
+#                         "project_link": project.project_link
+#                     } for project in resume.projects.all()
+#                 ]),
+#                 "references": filter_empty_entries([
+#                     {
+#                         "name": reference.name,
+#                         "contact_info": reference.contact_info,
+#                         "relationship": reference.relationship,
+#                     } for reference in resume.references.all()
+#                 ]),
+#                 "certifications": filter_empty_entries([
+#                     {
+#                         "name": certification.name,
+#                         "start_date": certification.start_date,
+#                         "end_date": certification.end_date,
+#                     } for certification in resume.certifications.all()
+#                 ]),
+#                 "achievements": filter_empty_entries([
+#                     {
+#                         "title": achievement.title,
+#                         "publisher": achievement.publisher,
+#                         "start_date": achievement.start_date,
+#                         "end_date": achievement.end_date,
+#                     } for achievement in resume.achievements.all()
+#                 ]),
+#                 "publications": filter_empty_entries([
+#                     {
+#                         "title": publication.title,
+#                         "start_date": publication.start_date,
+#                         "end_date": publication.end_date,
+#                     } for publication in resume.publications.all()
+#                 ])
+#             }
+
+#             model_name = 'new_user' if app.user else 'jobseeker'
+#             applications_list.append({
+#                 'id': app.id,
+#                 'first_name': app.first_name,
+#                 'last_name': app.last_name,
+#                 'email': app.email,
+#                 'phone_number': app.phone_number,
+#                 # 'bio': app.bio,
+#                 # 'education': app.education,
+#                 'status': app.status,
+#                 'applied_at': app.applied_at,
+#                 'model_name': model_name,
+#                 'resume_details': resume_data,
+#             })
+
+#         job_details = {
+#             'job_title': job.job_title,
+#             'college': job.college.college_name,
+#             'description': job.description,
+#             'requirements': job.requirements,
+#             'published_at': job.published_at,
+#             'experience_yr': job.experience_yr,
+#             'job_type': job.job_type,
+#             'experience': job.experience,
+#             'category': job.category,
+#             'skills': job.skills,
+#             'workplaceTypes': job.workplaceTypes,
+#             'location': job.location,
+#             'questions': job.questions,
+#             'job_status': job.job_status,
+#             'must_have_qualification': job.must_have_qualification,
+#         }
+
+#         response_data = {
+#             'jobdetails': job_details,
+#             'applicants': applications_list,
+#         }
+
+#         return JsonResponse(response_data, safe=False, status=200)
+    
+#     except Job1.DoesNotExist:
+#         return JsonResponse({'error': 'No Jobs Found'}, status=404)
+#     except Exception as e:
+#         return JsonResponse({'error': f'An error occurred: {str(e)}'}, status=500)
+
+
+
+# New optimized code for company and college fetch_job_applications
 
 def filter_empty_entries(entries):
     
@@ -4390,7 +4870,7 @@ def fetch_applications_for_company(job):
                 ])
             }
 
-        model_name = 'new_user' if app.user else 'Jobseeker'
+        model_name = 'new_user' if app.user else 'JobSeeker'
         applications_list.append({
             'id': app.id,
             'first_name': app.first_name,
@@ -4452,6 +4932,105 @@ def fetch_company_job_applications(request, company_in_charge_id, job_id):
     except Exception as e:
         return JsonResponse({'error': f'An error occurred: {str(e)}'}, status=500)
 
+
+def fetch_applications_for_college(job):
+    applications = Application1.objects.filter(job=job)
+    applications_list = []
+
+    for app in applications:
+        resume_data = {}
+        if app.user:
+            resume = Resume.objects.filter(user=app.user).first()
+        else:
+            resume = JobSeeker_Resume.objects.filter(job_seeker=app.job_seeker).first()
+
+        if resume:
+            resume_data = {
+                "address": resume.address,
+                "date_of_birth": resume.date_of_birth,
+                "website_urls": resume.website_urls,
+                "skills": resume.skills,
+                "activities": resume.activities,
+                "interests": resume.interests,
+                "languages": resume.languages,
+                "bio": resume.bio,
+                "city": resume.city,
+                "state": resume.state,
+                "country": resume.country,
+                "zipcode": resume.zipcode,
+                "objective": resume.objective.text if hasattr(resume, 'objective') else 'Not specified',
+                "education": [
+                    {
+                        "course_or_degree": education.course_or_degree,
+                        "school_or_university": education.school_or_university,
+                        "grade_or_cgpa": education.grade_or_cgpa,
+                        "start_date": education.start_date,
+                        "end_date": education.end_date,
+                        "description": education.description
+                    } for education in resume.education_entries.all()
+                ],
+                "experience": filter_empty_entries([
+                    {
+                        "job_title": experience.job_title,
+                        "company_name": experience.company_name,
+                        "start_date": experience.start_date,
+                        "end_date": experience.end_date,
+                        "description": experience.description,
+                    } for experience in resume.experience_entries.all()
+                ]),
+                "projects": filter_empty_entries([
+                    {
+                        "title": project.title,
+                        "description": project.description,
+                        "project_link": project.project_link
+                    } for project in resume.projects.all()
+                ]),
+                "references": filter_empty_entries([
+                    {
+                        "name": reference.name,
+                        "contact_info": reference.contact_info,
+                        "relationship": reference.relationship,
+                    } for reference in resume.references.all()
+                ]),
+                "certifications": filter_empty_entries([
+                    {
+                        "name": certification.name,
+                        "start_date": certification.start_date,
+                        "end_date": certification.end_date,
+                    } for certification in resume.certifications.all()
+                ]),
+                "achievements": filter_empty_entries([
+                    {
+                        "title": achievement.title,
+                        "publisher": achievement.publisher,
+                        "start_date": achievement.start_date,
+                        "end_date": achievement.end_date,
+                    } for achievement in resume.achievements.all()
+                ]),
+                "publications": filter_empty_entries([
+                    {
+                        "title": publication.title,
+                        "start_date": publication.start_date,
+                        "end_date": publication.end_date,
+                    } for publication in resume.publications.all()
+                ])
+            }
+
+        model_name = 'new_user' if app.user else 'JobSeeker'
+        applications_list.append({
+            'id': app.id,
+            'first_name': app.first_name,
+            'last_name': app.last_name,
+            'email': app.email,
+            'phone_number': app.phone_number,
+            'status': app.status,
+            'applied_at': app.applied_at,
+            'model_name': model_name,
+            'resume_details': resume_data,
+        })
+
+    return applications_list
+
 @csrf_exempt
 def fetch_college_job_applications(request, university_in_charge_id, job_id):
     auth_header = request.headers.get('Authorization')
@@ -4467,183 +5046,7 @@ def fetch_college_job_applications(request, university_in_charge_id, job_id):
 
     try:
         job = get_object_or_404(Job1, university_in_charge=university_in_charge, id=job_id)
-
-        applications = Application1.objects.filter(job=job)
-
-        applications_list = []
-        for app in applications:
-            resume_data = {}
-            if app.user:
-                resume = Resume.objects.filter(user=app.user).first()
-                if resume:
-                    resume_data = {
-                # "first_name": resume.first_name, 
-                # "last_name": resume.last_name,
-                # "email": resume.email,
-                # "phone": resume.phone,
-                "address": resume.address,
-                "date_of_birth": resume.date_of_birth,
-                "website_urls": resume.website_urls,
-                "skills": resume.skills,
-                "activities": resume.activities,
-                "interests": resume.interests,
-                "languages": resume.languages,
-                "bio": resume.bio,
-                "city": resume.city,
-                "state": resume.state,
-                "country": resume.country,
-                "zipcode": resume.zipcode,
-                # "attachments": resume.Attachment.url if resume.Attachment else None,
-                "objective": resume.objective.text if hasattr(resume, 'objective') else 'Not specified',
-                "education": [
-                    {
-                        "course_or_degree": education.course_or_degree,
-                        "school_or_university": education.school_or_university,
-                        "grade_or_cgpa": education.grade_or_cgpa,
-                        "start_date": education.start_date,
-                        "end_date": education.end_date,
-                        "description": education.description
-                    } for education in resume.education_entries.all()
-                ],
-                "experience": filter_empty_entries([
-                    {
-                        "job_title": experience.job_title,
-                        "company_name": experience.company_name,
-                        "start_date": experience.start_date,
-                        "end_date": experience.end_date,
-                        "description": experience.description,
-                    } for experience in resume.experience_entries.all()
-                ]),
-                "projects": filter_empty_entries([
-                    {
-                        "title": project.title,
-                        "description": project.description,
-                        "project_link": project.project_link
-                    } for project in resume.projects.all()
-                ]),
-                "references": filter_empty_entries([
-                    {
-                        "name": reference.name,
-                        "contact_info": reference.contact_info,
-                        "relationship": reference.relationship,
-                    } for reference in resume.references.all()
-                ]),
-                "certifications": filter_empty_entries([
-                    {
-                        "name": certification.name,
-                        "start_date": certification.start_date,
-                        "end_date": certification.end_date,
-                    } for certification in resume.certifications.all()
-                ]),
-                "achievements": filter_empty_entries([
-                    {
-                        "title": achievement.title,
-                        "publisher": achievement.publisher,
-                        "start_date": achievement.start_date,
-                        "end_date": achievement.end_date,
-                    } for achievement in resume.achievements.all()
-                ]),
-                "publications": filter_empty_entries([
-                    {
-                        "title": publication.title,
-                        "start_date": publication.start_date,
-                        "end_date": publication.end_date,
-                    } for publication in resume.publications.all()
-                ])
-            }
-            else:
-                resume = JobSeeker_Resume.objects.filter(job_seeker=app.job_seeker).first()
-                if resume:
-                    resume_data = {
-                # "first_name": resume.first_name, 
-                # "last_name": resume.last_name,
-                # "email": resume.email,
-                # "phone": resume.phone,
-                "address": resume.address,
-                "date_of_birth": resume.date_of_birth,
-                "website_urls": resume.website_urls,
-                "skills": resume.skills,
-                "activities": resume.activities,
-                "interests": resume.interests,
-                "languages": resume.languages,
-                "bio": resume.bio,
-                "city": resume.city,
-                "state": resume.state,
-                "country": resume.country,
-                "zipcode": resume.zipcode,
-                # "attachments": resume.Attachment.url if resume.Attachment else None,
-                "objective": resume.objective.text if hasattr(resume, 'objective') else 'Not specified',
-                "education": [
-                    {
-                        "course_or_degree": education.course_or_degree,
-                        "school_or_university": education.school_or_university,
-                        "grade_or_cgpa": education.grade_or_cgpa,
-                        "start_date": education.start_date,
-                        "end_date": education.end_date,
-                        "description": education.description
-                    } for education in resume.education_entries.all()
-                ],
-                "experience": filter_empty_entries([
-                    {
-                        "job_title": experience.job_title,
-                        "company_name": experience.company_name,
-                        "start_date": experience.start_date,
-                        "end_date": experience.end_date,
-                        "description": experience.description,
-                    } for experience in resume.experience_entries.all()
-                ]),
-                "projects": filter_empty_entries([
-                    {
-                        "title": project.title,
-                        "description": project.description,
-                        "project_link": project.project_link
-                    } for project in resume.projects.all()
-                ]),
-                "references": filter_empty_entries([
-                    {
-                        "name": reference.name,
-                        "contact_info": reference.contact_info,
-                        "relationship": reference.relationship,
-                    } for reference in resume.references.all()
-                ]),
-                "certifications": filter_empty_entries([
-                    {
-                        "name": certification.name,
-                        "start_date": certification.start_date,
-                        "end_date": certification.end_date,
-                    } for certification in resume.certifications.all()
-                ]),
-                "achievements": filter_empty_entries([
-                    {
-                        "title": achievement.title,
-                        "publisher": achievement.publisher,
-                        "start_date": achievement.start_date,
-                        "end_date": achievement.end_date,
-                    } for achievement in resume.achievements.all()
-                ]),
-                "publications": filter_empty_entries([
-                    {
-                        "title": publication.title,
-                        "start_date": publication.start_date,
-                        "end_date": publication.end_date,
-                    } for publication in resume.publications.all()
-                ])
-            }
-
-            model_name = 'new_user' if app.user else 'jobseeker'
-            applications_list.append({
-                'id': app.id,
-                'first_name': app.first_name,
-                'last_name': app.last_name,
-                'email': app.email,
-                'phone_number': app.phone_number,
-                # 'bio': app.bio,
-                # 'education': app.education,
-                'status': app.status,
-                'applied_at': app.applied_at,
-                'model_name': model_name,
-                'resume_details': resume_data,
-            })
+        applications_list = fetch_applications_for_college(job)
 
         job_details = {
             'job_title': job.job_title,
@@ -4674,6 +5077,8 @@ def fetch_college_job_applications(request, university_in_charge_id, job_id):
         return JsonResponse({'error': 'No Jobs Found'}, status=404)
     except Exception as e:
         return JsonResponse({'error': f'An error occurred: {str(e)}'}, status=500)
+
+
 
 
 @csrf_exempt
@@ -4767,7 +5172,6 @@ def update_company_application_status(request, company_in_charge_id, application
 
     try:
         company_in_charge = CompanyInCharge.objects.get(id=company_in_charge_id, token=token)
-        print(company_in_charge.company_name)
     except CompanyInCharge.DoesNotExist:
         return JsonResponse({'error': 'Invalid token or company in charge not found'}, status=401)
 
@@ -4792,7 +5196,7 @@ def update_company_application_status(request, company_in_charge_id, application
             f"notifications_{company_in_charge.token}",
             {
                 "type": "send_notification",
-                "message": f"Application status for {application.first_name} {application.last_name} updated to {application.status} by {company_in_charge.company_name}",
+                "message": f"Application status for {application.first_name} {application.last_name} updated to {application.status} by {application.company_in_charge}",
             },
         )
 
@@ -4801,7 +5205,7 @@ def update_company_application_status(request, company_in_charge_id, application
                 f"notifications_{application.job_seeker.token}",
                 {
                     "type": "send_notification",
-                    "message": f"Your application for {application.job.job_title} has been updated to {application.status} by {company_in_charge.company_name}",
+                    "message": f"Your application for {application.job.job_title} has been updated to {application.status} by {application.company_in_charge}",
                 },
             )
 
@@ -4810,7 +5214,7 @@ def update_company_application_status(request, company_in_charge_id, application
                 f"notifications_{application.user.token}",
                 {
                     "type": "send_notification",
-                    "message": f"Your application for {application.job.job_title} has been updated to {application.status} by {company_in_charge.company_name}",
+                    "message": f"Your application for {application.job.job_title} has been updated to {application.status} by {application.company_in_charge}",
                 },
             )
 
@@ -4830,7 +5234,6 @@ def update_college_application_status(request, university_in_charge_id, applicat
 
     try:
         university_in_charge = UniversityInCharge.objects.get(id=university_in_charge_id, token=token)
-        print(university_in_charge.university_name)
     except UniversityInCharge.DoesNotExist:
         return JsonResponse({'error': 'Invalid token or university in charge not found'}, status=401)
 
@@ -4856,7 +5259,7 @@ def update_college_application_status(request, university_in_charge_id, applicat
             f"notifications_{university_in_charge.token}",
             {
                 "type": "send_notification",
-                "message": f"Application status for {application.first_name} {application.last_name} updated to {application.status} by {university_in_charge.university_name}",
+                "message": f"Application status for {application.first_name} {application.last_name} updated to {application.status} by {application.university_in_charge}",
             },
         )
 
@@ -4865,7 +5268,7 @@ def update_college_application_status(request, university_in_charge_id, applicat
                 f"notifications_{application.job_seeker.token}",
                 {
                     "type": "send_notification",
-                    "message": f"Your application for {application.job.job_title} has been updated to {application.status} by {university_in_charge.university_name}",
+                    "message": f"Your application for {application.job.job_title} has been updated to {application.status} by {application.university_in_charge}",
                 },
             )
         
@@ -4874,7 +5277,7 @@ def update_college_application_status(request, university_in_charge_id, applicat
                 f"notifications_{application.user.token}",
                 {
                     "type": "send_notification",
-                    "message": f"Your application for {application.job.job_title} has been updated to {application.status} by {university_in_charge.university_name}",
+                    "message": f"Your application for {application.job.job_title} has been updated to {application.status} by {application.university_in_charge.university_name}",
                 },
             )
 

@@ -35,6 +35,7 @@ urlpatterns = [
     path('university/delete-account/', views.DeleteUniversityAccountView.as_view(), name='delete_university_account'),
     path('user/delete-account/', views.DeleteUserAccountView.as_view(), name='delete_user_account'),
     path('consultant/delete-account/', views.DeleteConsultantAccountView.as_view(), name='consultant-delete-account'),
+
     path('student-reset-password/', views.ResetPasswordNewUserView.as_view(), name='reset_student_password'),
     path('company-forgot',views.Company_Forgot_view.as_view(),name="forgot"),
     path('company-verify_otp',views.Company_Verify_view.as_view(),name="verify_otp1"),

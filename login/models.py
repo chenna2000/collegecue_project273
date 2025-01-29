@@ -52,7 +52,7 @@ class Meta:
 
 class CompanyInCharge(models.Model):
     # user = models.ForeignKey(User, on_delete=models.CASCADE, default=1)
-    company_name = models.CharField(max_length=255)
+    company_name = models.CharField(max_length=255,default="null")
     official_email = models.EmailField(unique=True,default="Null")
     country_code = models.CharField(max_length=3, default='+91')
     mobile_number = models.CharField(max_length=15,default="Null")
