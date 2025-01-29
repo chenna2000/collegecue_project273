@@ -23,7 +23,6 @@ from django.db.models import Count # type: ignore
 from django.db.models.functions import TruncMonth # type: ignore
 from asgiref.sync import async_to_sync # type: ignore
 from channels.layers import get_channel_layer # type: ignore
-from django.forms import ValidationError # type: ignore
 
 
 def home(request):
@@ -130,7 +129,7 @@ def job_list(request):
     except Exception as e:
         return JsonResponse({'error': str(e)}, status=500)
 
-####################################################################NEW    
+####################################################################NEW
 def job_list_showcase(request):
     try:
         if request.method == 'GET':
@@ -1718,7 +1717,7 @@ def submit_application_with_screening_for_company(request, job_id, company_in_ch
 
 @method_decorator(csrf_exempt, name='dispatch')
 class CollegeListCreateView(View):
-##################################################################################################NEWLY MADE #######################    
+##################################################################################################NEWLY MADE #######################
     def get(self, request, university_in_charge_id):
         auth_header = request.headers.get('Authorization')
         if not auth_header or not auth_header.startswith('Bearer '):

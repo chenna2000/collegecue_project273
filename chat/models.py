@@ -32,13 +32,9 @@ class Message(models.Model):
         return Message.objects.filter(is_read=True)
 
 class MessageAttachment(models.Model):
-    # Store the Cloudinary URL of the file
     file_url = models.URLField(max_length=500, default="https://res.cloudinary.com/your-cloud-name/image/upload/vdefault/default_file_placeholder.png")
-    # Store the file's original name
     original_name = models.CharField(max_length=255)
-    # Store the type of file (e.g., pdf, jpg, zip, etc.)
     file_type = models.CharField(max_length=50)
-    # Store the timestamp of when the file was uploaded
     uploaded_at = models.DateTimeField(auto_now_add=True)
 
     def __str__(self):
