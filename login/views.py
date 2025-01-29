@@ -350,18 +350,45 @@ class Forgot2_view(View):
 
 
 
+# @method_decorator(csrf_exempt, name='dispatch')
+# class StudentLogoutView(View):
+#     def post(self, request):
+#         try:
+#             auth_header = request.headers.get('Authorization', '')
+#             token = auth_header.split(' ')[1] if auth_header.startswith('Bearer ') else None
+
+#             if not token:
+#                 return JsonResponse({'error': 'Token is missing or invalid format'}, status=400)
+
+#             data = json.loads(request.body.decode('utf-8'))
+#             if not data.get('confirmation', False):
+#                 return JsonResponse({'error': 'Confirmation is required to logout'}, status=400)
+
+#             student_user = new_user.objects.filter(token=token).first()
+#             if not student_user:
+#                 return JsonResponse({'error': 'Invalid token'}, status=404)
+
+#             student_user.token = None
+#             student_user.save()
+
+#             return JsonResponse({'success': True, 'message': 'Student logout successful'}, status=200)
+
+#         except (json.JSONDecodeError, IndexError):
+#             return JsonResponse({'error': 'Invalid JSON or token'}, status=400)
+#         except Exception as e:
+#             return JsonResponse({'error': str(e)}, status=500)
+
 @method_decorator(csrf_exempt, name='dispatch')
 class StudentLogoutView(View):
     def post(self, request):
         try:
-            auth_header = request.headers.get('Authorization', '')
-            token = auth_header.split(' ')[1] if auth_header.startswith('Bearer ') else None
+            token = request.headers.get('Authorization', '').split(' ')[1] if request.headers.get('Authorization', '').startswith('Bearer ') else None
 
             if not token:
                 return JsonResponse({'error': 'Token is missing or invalid format'}, status=400)
 
             data = json.loads(request.body.decode('utf-8'))
-            if not data.get('confirmation', False):
+            if not data.get('confirmation'):
                 return JsonResponse({'error': 'Confirmation is required to logout'}, status=400)
 
             student_user = new_user.objects.filter(token=token).first()
@@ -373,32 +400,62 @@ class StudentLogoutView(View):
 
             return JsonResponse({'success': True, 'message': 'Student logout successful'}, status=200)
 
-        except (json.JSONDecodeError, IndexError):
-            return JsonResponse({'error': 'Invalid JSON or token'}, status=400)
+        except (json.JSONDecodeError, IndexError) as e:
+            return JsonResponse({'error': 'Invalid JSON or token', 'details': str(e)}, status=400)
         except Exception as e:
             return JsonResponse({'error': str(e)}, status=500)
+
+
+# @method_decorator(csrf_exempt, name='dispatch')
+# class DeleteUserAccountView(View):
+#     def post(self, request):
+#         try:
+#             token = request.headers.get('Authorization', '').split(' ')[1]
+#             data = json.loads(request.body.decode('utf-8'))
+
+#             if not token or not data.get('confirmation'):
+#                 return JsonResponse({'error': 'Token or confirmation missing'}, status=400)
+
+#             user= new_user.objects.filter(token=token).first()
+#             if not user:
+#                 return JsonResponse({'error': 'Invalid token'}, status=404)
+
+#             user.delete()
+#             return JsonResponse({'success': True, 'message': 'Account deleted successfully'}, status=200)
+
+#         except (json.JSONDecodeError, IndexError):
+#             return JsonResponse({'error': 'Invalid JSON or missing token'}, status=400)
+#         except Exception as e:
+#             return JsonResponse({'error': str(e)}, status=500)
 
 @method_decorator(csrf_exempt, name='dispatch')
 class DeleteUserAccountView(View):
     def post(self, request):
         try:
-            token = request.headers.get('Authorization', '').split(' ')[1]
-            data = json.loads(request.body.decode('utf-8'))
+            auth_header = request.headers.get('Authorization', '')
+            if not auth_header.startswith('Bearer '):
+                return JsonResponse({'error': 'Token is missing or invalid format'}, status=400)
 
-            if not token or not data.get('confirmation'):
+            token = auth_header[7:]
+
+            try:
+                data = json.loads(request.body.decode('utf-8'))
+            except json.JSONDecodeError:
+                return JsonResponse({'error': 'Invalid JSON'}, status=400)
+
+            if not data.get('confirmation'):
                 return JsonResponse({'error': 'Token or confirmation missing'}, status=400)
 
-            user= new_user.objects.filter(token=token).first()
+            user = new_user.objects.filter(token=token).first()
             if not user:
                 return JsonResponse({'error': 'Invalid token'}, status=404)
 
             user.delete()
             return JsonResponse({'success': True, 'message': 'Account deleted successfully'}, status=200)
 
-        except (json.JSONDecodeError, IndexError):
-            return JsonResponse({'error': 'Invalid JSON or missing token'}, status=400)
         except Exception as e:
             return JsonResponse({'error': str(e)}, status=500)
+
 
 
 @method_decorator(csrf_exempt, name='dispatch')
@@ -832,18 +889,45 @@ class LoginConsultantView(View):
 ##    except Exception as e:
 ##        return JsonResponse({'error': str(e)}, status=500)
 
+# @method_decorator(csrf_exempt, name='dispatch')
+# class LogoutCompanyInChargeView(View):
+#     def post(self, request):
+#         try:
+#             auth_header = request.headers.get('Authorization', '')
+#             token = auth_header.split(' ')[1] if auth_header.startswith('Bearer ') else None
+
+#             if not token:
+#                 return JsonResponse({'error': 'Token is missing or invalid format'}, status=400)
+
+#             data = json.loads(request.body.decode('utf-8'))
+#             if not data.get('confirmation', False):
+#                 return JsonResponse({'error': 'Confirmation is required to logout'}, status=400)
+
+#             company = CompanyInCharge.objects.filter(token=token).first()
+#             if not company:
+#                 return JsonResponse({'error': 'Invalid token'}, status=404)
+
+#             company.token = None
+#             company.save()
+
+#             return JsonResponse({'success': True, 'message': 'Logout successful'}, status=200)
+
+#         except (json.JSONDecodeError, IndexError):
+#             return JsonResponse({'error': 'Invalid JSON or token'}, status=400)
+#         except Exception as e:
+#             return JsonResponse({'error': str(e)}, status=500)
+
 @method_decorator(csrf_exempt, name='dispatch')
 class LogoutCompanyInChargeView(View):
     def post(self, request):
         try:
-            auth_header = request.headers.get('Authorization', '')
-            token = auth_header.split(' ')[1] if auth_header.startswith('Bearer ') else None
+            token = request.headers.get('Authorization', '').split(' ')[1] if request.headers.get('Authorization', '').startswith('Bearer ') else None
 
             if not token:
                 return JsonResponse({'error': 'Token is missing or invalid format'}, status=400)
 
             data = json.loads(request.body.decode('utf-8'))
-            if not data.get('confirmation', False):
+            if not data.get('confirmation'):
                 return JsonResponse({'error': 'Confirmation is required to logout'}, status=400)
 
             company = CompanyInCharge.objects.filter(token=token).first()
@@ -853,26 +937,50 @@ class LogoutCompanyInChargeView(View):
             company.token = None
             company.save()
 
-            return JsonResponse({'success': True, 'message': 'Logout successful'}, status=200)
+            return JsonResponse({'success': True, 'message': 'Company Logout successful'}, status=200)
 
-        except (json.JSONDecodeError, IndexError):
-            return JsonResponse({'error': 'Invalid JSON or token'}, status=400)
+        except (json.JSONDecodeError, IndexError) as e:
+            return JsonResponse({'error': 'Invalid JSON or token', 'details': str(e)}, status=400)
         except Exception as e:
             return JsonResponse({'error': str(e)}, status=500)
+
+
+# @method_decorator(csrf_exempt, name='dispatch')
+# class LogoutUniversityView(View):
+#     def post(self, request):
+#         try:
+#             auth_header = request.headers.get('Authorization', '')
+#             token = auth_header.split(' ')[1] if auth_header.startswith('Bearer ') else None
+
+#             if not token:
+#                 return JsonResponse({'error': 'Token is missing or invalid format'}, status=400)
+
+#             data = json.loads(request.body.decode('utf-8'))
+#             if not data.get('confirmation', False):
+#                 return JsonResponse({'error': 'Confirmation is required to logout'}, status=400)
+
+#             university = UniversityInCharge.objects.filter(token=token).first()
+#             if not university:
+#                 return JsonResponse({'error': 'Invalid token'}, status=404)
+
+#             university.token = None
+#             university.save()
+
+#             return JsonResponse({'success': True, 'message': 'Logout successful'}, status=200)
+
+#         except (json.JSONDecodeError, IndexError):
+#             return JsonResponse({'error': 'Invalid JSON or token'}, status=400)
+#         except Exception as e:
+#             return JsonResponse({'error': str(e)}, status=500)
 
 @method_decorator(csrf_exempt, name='dispatch')
 class LogoutUniversityView(View):
     def post(self, request):
         try:
-            auth_header = request.headers.get('Authorization', '')
-            token = auth_header.split(' ')[1] if auth_header.startswith('Bearer ') else None
+            token = request.headers.get('Authorization', '').split(' ')[1] if request.headers.get('Authorization', '').startswith('Bearer ') else None
 
             if not token:
                 return JsonResponse({'error': 'Token is missing or invalid format'}, status=400)
-
-            data = json.loads(request.body.decode('utf-8'))
-            if not data.get('confirmation', False):
-                return JsonResponse({'error': 'Confirmation is required to logout'}, status=400)
 
             university = UniversityInCharge.objects.filter(token=token).first()
             if not university:
@@ -881,12 +989,13 @@ class LogoutUniversityView(View):
             university.token = None
             university.save()
 
-            return JsonResponse({'success': True, 'message': 'Logout successful'}, status=200)
+            return JsonResponse({'success': True, 'message': 'College Logout successful'}, status=200)
 
         except (json.JSONDecodeError, IndexError):
             return JsonResponse({'error': 'Invalid JSON or token'}, status=400)
         except Exception as e:
             return JsonResponse({'error': str(e)}, status=500)
+
 
 @method_decorator(csrf_exempt, name='dispatch')
 class LogoutConsultantView(View):
@@ -957,19 +1066,42 @@ class LoginJobSeekerView(View):
             return JsonResponse({'error': str(e)}, status=500)
 
 
+# @method_decorator(csrf_exempt, name='dispatch')
+# class JobSeekerLogoutView(View):
+#     def post(self, request):
+#         try:
+#             auth_header = request.headers.get('Authorization', '')
+#             token = auth_header.split(' ')[1] if auth_header.startswith('Bearer ') else None
+
+#             if not token:
+#                 return JsonResponse({'error': 'Token is missing or invalid format'}, status=400)
+
+#             data = json.loads(request.body.decode('utf-8'))
+#             if not data.get('confirmation', False):
+#                 return JsonResponse({'error': 'Confirmation is required to logout'}, status=400)
+
+#             job_seeker = JobSeeker.objects.filter(token=token).first()
+#             if not job_seeker:
+#                 return JsonResponse({'error': 'Invalid token'}, status=404)
+
+#             job_seeker.token = None
+#             job_seeker.save()
+
+#             return JsonResponse({'success': True, 'message': 'Logout successful'}, status=200)
+
+#         except (json.JSONDecodeError, IndexError):
+#             return JsonResponse({'error': 'Invalid JSON or token'}, status=400)
+#         except Exception as e:
+#             return JsonResponse({'error': str(e)}, status=500)
+
 @method_decorator(csrf_exempt, name='dispatch')
 class JobSeekerLogoutView(View):
     def post(self, request):
         try:
-            auth_header = request.headers.get('Authorization', '')
-            token = auth_header.split(' ')[1] if auth_header.startswith('Bearer ') else None
+            token = request.headers.get('Authorization', '').split(' ')[1] if request.headers.get('Authorization', '').startswith('Bearer ') else None
 
             if not token:
                 return JsonResponse({'error': 'Token is missing or invalid format'}, status=400)
-
-            data = json.loads(request.body.decode('utf-8'))
-            if not data.get('confirmation', False):
-                return JsonResponse({'error': 'Confirmation is required to logout'}, status=400)
 
             job_seeker = JobSeeker.objects.filter(token=token).first()
             if not job_seeker:
@@ -984,6 +1116,7 @@ class JobSeekerLogoutView(View):
             return JsonResponse({'error': 'Invalid JSON or token'}, status=400)
         except Exception as e:
             return JsonResponse({'error': str(e)}, status=500)
+
 
 @method_decorator(csrf_exempt, name='dispatch')
 class ChangePasswordJobSeekerView(View):
@@ -1194,17 +1327,47 @@ class DeleteCompanyInChargeAccountView(View):
             return JsonResponse({'error': str(e)}, status=500)
 
 
+# @method_decorator(csrf_exempt, name='dispatch')
+# class DeleteJobSeekerAccountView(View):
+#     def post(self, request):
+#         try:
+#             auth_header = request.headers.get('Authorization')
+#             if not auth_header or not auth_header.startswith('Bearer '):
+#                 return JsonResponse({'error': 'Token is missing or invalid format'}, status=400)
+
+#             token = auth_header.split(' ')[1]
+#             data = json.loads(request.body.decode('utf-8'))
+#             if not data.get('confirmation', False):
+#                 return JsonResponse({'error': 'Confirmation is required to delete account'}, status=400)
+
+#             job_seeker = JobSeeker.objects.filter(token=token).first()
+#             if not job_seeker:
+#                 return JsonResponse({'error': 'Invalid token'}, status=404)
+
+#             job_seeker.delete()
+#             return JsonResponse({'success': True, 'message': 'Account deleted successfully'}, status=200)
+
+#         except json.JSONDecodeError:
+#             return JsonResponse({'error': 'Invalid JSON'}, status=400)
+#         except Exception as e:
+#             return JsonResponse({'error': str(e)}, status=500)
+
 @method_decorator(csrf_exempt, name='dispatch')
 class DeleteJobSeekerAccountView(View):
     def post(self, request):
         try:
-            auth_header = request.headers.get('Authorization')
-            if not auth_header or not auth_header.startswith('Bearer '):
+            auth_header = request.headers.get('Authorization', '')
+            if not auth_header.startswith('Bearer '):
                 return JsonResponse({'error': 'Token is missing or invalid format'}, status=400)
 
-            token = auth_header.split(' ')[1]
-            data = json.loads(request.body.decode('utf-8'))
-            if not data.get('confirmation', False):
+            token = auth_header[7:]
+
+            try:
+                data = json.loads(request.body.decode('utf-8'))
+            except json.JSONDecodeError:
+                return JsonResponse({'error': 'Invalid JSON'}, status=400)
+
+            if not data.get('confirmation'):
                 return JsonResponse({'error': 'Confirmation is required to delete account'}, status=400)
 
             job_seeker = JobSeeker.objects.filter(token=token).first()
@@ -1214,19 +1377,48 @@ class DeleteJobSeekerAccountView(View):
             job_seeker.delete()
             return JsonResponse({'success': True, 'message': 'Account deleted successfully'}, status=200)
 
-        except json.JSONDecodeError:
-            return JsonResponse({'error': 'Invalid JSON'}, status=400)
         except Exception as e:
             return JsonResponse({'error': str(e)}, status=500)
+
+
+# @method_decorator(csrf_exempt, name='dispatch')
+# class DeleteUniversityAccountView(View):
+#     def post(self, request):
+#         try:
+#             token = request.headers.get('Authorization', '').split(' ')[1]
+#             data = json.loads(request.body.decode('utf-8'))
+
+#             if not token or not data.get('confirmation'):
+#                 return JsonResponse({'error': 'Token or confirmation missing'}, status=400)
+
+#             university = UniversityInCharge.objects.filter(token=token).first()
+#             if not university:
+#                 return JsonResponse({'error': 'Invalid token'}, status=404)
+
+#             university.delete()
+#             return JsonResponse({'success': True, 'message': 'Account deleted successfully'}, status=200)
+
+#         except (json.JSONDecodeError, IndexError):
+#             return JsonResponse({'error': 'Invalid JSON or missing token'}, status=400)
+#         except Exception as e:
+#             return JsonResponse({'error': str(e)}, status=500)
 
 @method_decorator(csrf_exempt, name='dispatch')
 class DeleteUniversityAccountView(View):
     def post(self, request):
         try:
-            token = request.headers.get('Authorization', '').split(' ')[1]
-            data = json.loads(request.body.decode('utf-8'))
+            auth_header = request.headers.get('Authorization', '')
+            if not auth_header.startswith('Bearer '):
+                return JsonResponse({'error': 'Token is missing or invalid format'}, status=400)
 
-            if not token or not data.get('confirmation'):
+            token = auth_header[7:]
+
+            try:
+                data = json.loads(request.body.decode('utf-8'))
+            except json.JSONDecodeError:
+                return JsonResponse({'error': 'Invalid JSON'}, status=400)
+
+            if not data.get('confirmation'):
                 return JsonResponse({'error': 'Token or confirmation missing'}, status=400)
 
             university = UniversityInCharge.objects.filter(token=token).first()
@@ -1236,23 +1428,52 @@ class DeleteUniversityAccountView(View):
             university.delete()
             return JsonResponse({'success': True, 'message': 'Account deleted successfully'}, status=200)
 
-        except (json.JSONDecodeError, IndexError):
-            return JsonResponse({'error': 'Invalid JSON or missing token'}, status=400)
         except Exception as e:
             return JsonResponse({'error': str(e)}, status=500)
+
+
+# @method_decorator(csrf_exempt, name='dispatch')
+# class DeleteConsultantAccountView(View):
+#     def post(self, request):
+#         try:
+#             auth_header = request.headers.get('Authorization', '')
+#             token = auth_header.split(' ')[1] if auth_header.startswith('Bearer ') else None
+
+#             if not token:
+#                 return JsonResponse({'error': 'Token is missing or invalid format'}, status=400)
+
+#             data = json.loads(request.body.decode('utf-8'))
+#             if not data.get('confirmation', False):
+#                 return JsonResponse({'error': 'Confirmation is required to delete account'}, status=400)
+
+#             consultant = Consultant.objects.filter(token=token).first()
+#             if not consultant:
+#                 return JsonResponse({'error': 'Invalid token'}, status=404)
+
+#             consultant.delete()
+#             return JsonResponse({'success': True, 'message': 'Account deleted successfully'}, status=200)
+
+#         except (json.JSONDecodeError, IndexError):
+#             return JsonResponse({'error': 'Invalid JSON or token'}, status=400)
+#         except Exception as e:
+#             return JsonResponse({'error': str(e)}, status=500)
 
 @method_decorator(csrf_exempt, name='dispatch')
 class DeleteConsultantAccountView(View):
     def post(self, request):
         try:
             auth_header = request.headers.get('Authorization', '')
-            token = auth_header.split(' ')[1] if auth_header.startswith('Bearer ') else None
-
-            if not token:
+            if not auth_header.startswith('Bearer '):
                 return JsonResponse({'error': 'Token is missing or invalid format'}, status=400)
 
-            data = json.loads(request.body.decode('utf-8'))
-            if not data.get('confirmation', False):
+            token = auth_header[7:]
+
+            try:
+                data = json.loads(request.body.decode('utf-8'))
+            except json.JSONDecodeError:
+                return JsonResponse({'error': 'Invalid JSON'}, status=400)
+
+            if not data.get('confirmation'):
                 return JsonResponse({'error': 'Confirmation is required to delete account'}, status=400)
 
             consultant = Consultant.objects.filter(token=token).first()
@@ -1262,10 +1483,9 @@ class DeleteConsultantAccountView(View):
             consultant.delete()
             return JsonResponse({'success': True, 'message': 'Account deleted successfully'}, status=200)
 
-        except (json.JSONDecodeError, IndexError):
-            return JsonResponse({'error': 'Invalid JSON or token'}, status=400)
         except Exception as e:
             return JsonResponse({'error': str(e)}, status=500)
+
 
 ##with session
 @method_decorator(csrf_exempt, name='dispatch')

@@ -32,7 +32,7 @@ class Message(models.Model):
         return Message.objects.filter(is_read=True)
 
 class MessageAttachment(models.Model):
-    file = models.FileField(upload_to='attachments/%Y/%m/%d/')
+    file_url = models.URLField(max_length=500,default="https://example.com/default-file-url")
     original_name = models.CharField(max_length=255)
     file_type = models.CharField(max_length=50)
     uploaded_at = models.DateTimeField(auto_now_add=True)
