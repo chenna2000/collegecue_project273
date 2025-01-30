@@ -35,31 +35,6 @@ def create_subadmin(username, password):
 def is_superadmin(user):
     return user.is_authenticated and user.is_superuser
 
-# def send_data_to_google_sheets(first_name, last_name, email, country_code, phone_number, password, sheetname):
-#     sheet_range = f"{sheetname}!A1"
-#     today = datetime.now()
-#     formatted_date = today.strftime("%d/%m/%Y")
-
-#     if sheetname == "Sheet1":
-#         row_data = [
-#             first_name, last_name, email,
-#             country_code, phone_number, password, formatted_date
-#         ]
-#     else:
-#         return JsonResponse({'message': "Invalid sheet name"} , safe=False)
-
-#     body = {
-#         'values': [row_data]
-#     }
-
-#     service = build('sheets', 'v4', credentials=credentials)
-#     result = service.spreadsheets().values().append(
-#         spreadsheetId=SPREADSHEET_ID, range=sheet_range,
-#         valueInputOption='RAW', body=body).execute()
-
-#     return JsonResponse({'message': f"{result.get('updates').get('updatedCells')} cells updated in {sheetname}."} , safe=False)
-
-
 def send_data_to_google_sheets(first_name, last_name, email, country_code, phone_number, password, sheetname):
     if sheetname != "Sheet1":
         return JsonResponse({'message': "Invalid sheet name"}, safe=False)
@@ -82,32 +57,6 @@ def send_data_to_google_sheets(first_name, last_name, email, country_code, phone
 
     updated_cells = result.get('updates', {}).get('updatedCells', 0)
     return JsonResponse({'message': f"{updated_cells} cells updated in {sheetname}."}, safe=False)
-
-
-
-
-# def send_data_to_google_sheet2(companyname,officialmale,country_code,mobilenumber,password,linkedinprofile,company_person_name,agreed_to_terms,sheetname):
-#     sheet_range = f"{sheetname}!A1"
-#     today = datetime.now()
-#     formatted_date = today.strftime("%d/%m/%Y")
-
-#     if sheetname == "Sheet2":
-#         row_data = [
-#             companyname, officialmale,country_code,mobilenumber,password,linkedinprofile,company_person_name,agreed_to_terms,formatted_date
-#         ]
-#     else:
-#         return JsonResponse({'message': "Invalid sheet name"} , safe=False)
-
-#     body = {
-#         'values': [row_data]
-#     }
-
-#     service = build('sheets', 'v4', credentials=credentials)
-#     result = service.spreadsheets().values().append(
-#         spreadsheetId=SPREADSHEET_ID, range=sheet_range,
-#         valueInputOption='RAW', body=body).execute()
-
-#     return JsonResponse({'message': f"{result.get('updates').get('updatedCells')} cells updated in {sheetname}."} , safe=False)
 
 
 def send_data_to_google_sheet2(companyname, officialmale, country_code, mobilenumber, password, linkedinprofile, company_person_name, agreed_to_terms, sheetname):
@@ -135,34 +84,6 @@ def send_data_to_google_sheet2(companyname, officialmale, country_code, mobilenu
     updated_cells = result.get('updates', {}).get('updatedCells', 0)
     return JsonResponse({'message': f"{updated_cells} cells updated in {sheetname}."}, safe=False)
 
-
-
-
-
-# def send_data_to_google_sheet3(university,officialmale,country_code,mobilenumber,password,linkedinprofile,college_person_name,agreed_to_terms,sheetname):
-#     sheet_range = f"{sheetname}!A1"
-#     today = datetime.now()
-#     formatted_date = today.strftime("%d/%m/%Y")
-
-#     if sheetname == "Sheet3":
-#         row_data = [
-#             university,officialmale,country_code,mobilenumber,password,linkedinprofile,college_person_name,agreed_to_terms,formatted_date
-#         ]
-#     else:
-#         return JsonResponse({'message': "Invalid sheet name"} , safe=False)
-
-#     body = {
-#         'values': [row_data]
-#     }
-
-#     service = build('sheets', 'v4', credentials=credentials)
-#     result = service.spreadsheets().values().append(
-#         spreadsheetId=SPREADSHEET_ID, range=sheet_range,
-#         valueInputOption='RAW', body=body).execute()
-
-#     return JsonResponse({'message': f"{result.get('updates').get('updatedCells')} cells updated in {sheetname}."} , safe=False)
-
-
 def send_data_to_google_sheet3(university, officialmale, country_code, mobilenumber, password, linkedinprofile, college_person_name, agreed_to_terms, sheetname):
     if sheetname != "Sheet3":
         return JsonResponse({'message': "Invalid sheet name"}, safe=False)
@@ -189,31 +110,6 @@ def send_data_to_google_sheet3(university, officialmale, country_code, mobilenum
     return JsonResponse({'message': f"{updated_cells} cells updated in {sheetname}."}, safe=False)
 
 
-
-
-# def send_data_to_google_sheet4(consultant_name,official_email,country_code,mobile_number,password,linkedin_profile,consultant_person_name,agreed_to_terms,sheetName):
-#     sheet_range = f"{sheetName}!A1"
-#     today = datetime.now()
-#     formatted_date = today.strftime("%d/%m/%Y")
-#     if sheetName == "Sheet4":
-#         row_data = [
-#             consultant_name,official_email,country_code,mobile_number,password,linkedin_profile,consultant_person_name,agreed_to_terms,formatted_date
-#         ]
-#     else:
-#         return JsonResponse({'message': "Invalid sheet name"} , safe=False)
-
-#     body = {
-#         'values': [row_data]
-#     }
-
-#     service = build('sheets', 'v4', credentials=credentials)
-#     result = service.spreadsheets().values().append(
-#         spreadsheetId=SPREADSHEET_ID, range=sheet_range,
-#         valueInputOption='RAW', body=body).execute()
-
-#     return JsonResponse({'message': f"{result.get('updates').get('updatedCells')} cells updated in {sheetName}."} , safe=False)
-
-
 def send_data_to_google_sheet4(consultant_name, official_email, country_code, mobile_number, password, linkedin_profile, consultant_person_name, agreed_to_terms, sheetName):
     if sheetName != "Sheet4":
         return JsonResponse({'message': "Invalid sheet name"}, safe=False)
@@ -238,31 +134,6 @@ def send_data_to_google_sheet4(consultant_name, official_email, country_code, mo
 
     updated_cells = result.get('updates', {}).get('updatedCells', 0)
     return JsonResponse({'message': f"{updated_cells} cells updated in {sheetName}."}, safe=False)
-
-
-
-# def send_data_to_google_sheet5(first_name, last_name, email, country_code, mobile_number, password, agreed_to_terms, sheetname):
-#     sheet_range = f"{sheetname}!A1"
-#     today = datetime.now()
-#     formatted_date = today.strftime("%d/%m/%Y")
-
-#     if sheetname == "Sheet5":
-#         row_data = [
-#             first_name, last_name, email, country_code, mobile_number, password, agreed_to_terms, formatted_date
-#         ]
-#     else:
-#         return JsonResponse({'message': "Invalid sheet name"}, safe=False)
-
-#     body = {
-#         'values': [row_data]
-#     }
-
-#     service = build('sheets', 'v4', credentials=credentials)
-#     result = service.spreadsheets().values().append(
-#         spreadsheetId=SPREADSHEET_ID, range=sheet_range,
-#         valueInputOption='RAW', body=body).execute()
-
-#     return JsonResponse({'message': f"{result.get('updates').get('updatedCells')} cells updated in {sheetname}."}, safe=False)
 
 
 def send_data_to_google_sheet5(first_name, last_name, email, country_code, mobile_number, password, agreed_to_terms, sheetname):

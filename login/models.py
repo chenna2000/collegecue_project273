@@ -1,7 +1,6 @@
 from django.contrib.auth.models import AbstractUser # type: ignore
 from django.db import models # type: ignore
 
-
 class CustomUser(AbstractUser):
     is_subadmin = models.BooleanField(default=False)
     groups = models.ManyToManyField('auth.Group', related_name='customuser_set', blank=True)
@@ -51,7 +50,6 @@ class Meta:
     db_table="collegecuefinal_data"
 
 class CompanyInCharge(models.Model):
-    # user = models.ForeignKey(User, on_delete=models.CASCADE, default=1)
     company_name = models.CharField(max_length=255,default="null")
     official_email = models.EmailField(unique=True,default="Null")
     country_code = models.CharField(max_length=3, default='+91')
@@ -61,18 +59,8 @@ class CompanyInCharge(models.Model):
     company_person_name = models.CharField(max_length=255,default="Null")
     agreed_to_terms = models.BooleanField(default=False)
     token = models.CharField(max_length=255, blank=True, null=True)
-    # otp_code = models.CharField(max_length=6, blank=True, null=True)
-    # otp_generated_at = models.DateTimeField(blank=True, null=True)
-
-    # def is_otp_valid(self):
-    #     if self.otp_generated_at:
-    #         return now() <= self.otp_generated_at + timedelta(minutes=10)
-    #     return False
-
-
 
 class UniversityInCharge(models.Model):
-    # user = models.ForeignKey(User, on_delete=models.CASCADE, default=1)
     university_name = models.CharField(max_length=255)
     official_email = models.EmailField(unique=True,default="Null")
     country_code = models.CharField(max_length=3, default='+91')
@@ -82,17 +70,8 @@ class UniversityInCharge(models.Model):
     college_person_name = models.CharField(max_length=255,default="Null")
     agreed_to_terms = models.BooleanField(default=False)
     token = models.CharField(max_length=255, blank=True, null=True)
-    # otp_code = models.CharField(max_length=6, blank=True, null=True)
-    # otp_generated_at = models.DateTimeField(blank=True, null=True)
-
-    # def is_otp_valid(self):
-    #     if self.otp_generated_at:
-    #         return now() <= self.otp_generated_at + timedelta(minutes=10)
-    #     return False
-
 
 class Consultant(models.Model):
-    # user = models.ForeignKey(User, on_delete=models.CASCADE, default=1)
     consultant_name = models.CharField(max_length=255,default="Null")
     official_email = models.EmailField(unique=True,default="Null")
     country_code = models.CharField(max_length=3, default='+91')
@@ -132,14 +111,6 @@ class JobSeeker(models.Model):
     country_code = models.CharField(max_length=5)
     token = models.CharField(max_length=255, blank=True, null=True)
     agreed_to_terms = models.BooleanField(default=False)
-    # otp_code = models.CharField(max_length=6, blank=True, null=True)
-    # otp_generated_at = models.DateTimeField(blank=True, null=True)
-
-    # def is_otp_valid(self):
-    #     if self.otp_generated_at:
-    #         return now() <= self.otp_generated_at + timedelta(minutes=10)
-    #     return False
-
-
+  
     def __str__(self):
       return f"{self.first_name} {self.last_name}"

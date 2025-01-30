@@ -328,7 +328,7 @@ class Job1(models.Model):
         return self.job_title
 
     class Meta:
-        db_table = 'job1'  # Custom table name for Job1
+        db_table = 'job1'
 
 class Application1(models.Model):
     university_in_charge = models.ForeignKey(UniversityInCharge, on_delete=models.CASCADE)
