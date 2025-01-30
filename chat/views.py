@@ -68,7 +68,7 @@ def search_user(request):
                 result.append(user_data)
         except Exception as e:
             # print(f"Error fetching inbox: {str(e)}")
-            continue
+            return JsonResponse({"error": f"An error occurred: {str(e)}"}, status=500)
 
     return Response(result)
 
